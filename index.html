@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vannsensor status</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+      color: #0f172a;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+      padding: 32px;
+    }
+
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      font-size: 14px;
+      color: #0284c7;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 16px;
+    }
+
+    .status-box {
+      border-radius: 18px;
+      padding: 24px;
+      margin-top: 24px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+
+    .status-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .dry {
+      color: #16a34a;
+    }
+
+    .medium {
+      color: #ca8a04;
+    }
+
+    .high {
+      color: #ea580c;
+    }
+
+    .very-high {
+      color: #dc2626;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .metric {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .metric-label {
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .error {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .status {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="header">
+        <div class="eyebrow">Live sensorstatus</div>
+        <h1>Vannsensor</h1>
+        <div class="subtitle">
+          Siste registrerte måling fra Pico W.
+        </div>
+      </div>
+
+      <div class="status-box">
+        <div class="status-label">Status</div>
+        <div id="status" class="status">Laster...</div>
+
+        <div class="grid">
+          <div class="metric">
+            <div class="metric-label">Vannnivåverdi</div>
+            <div id="waterLevel" class="metric-value">-</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Kilde</div>
+            <div id="source" class="metric-value">-</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Sensor</div>
+            <div id="sensor" class="metric-value">-</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Sist oppdatert</div>
+            <div id="timestamp" class="metric-value">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Data hentes automatisk fra <code>data/latest.json</code>.
+        Siden oppdateres hvert 30. sekund.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function loadSensorData() {
+      try {
+        const response = await fetch("data/latest.json?cacheBust=" + Date.now());
+
+        if (!response.ok) {
+          throw new Error("Kunne ikke hente data/latest.json");
+        }
+
+        const data = await response.json();
+
+        const statusElement = document.getElementById("status");
+        const waterLevelElement = document.getElementById("waterLevel");
+        const sourceElement = document.getElementById("source");
+        const sensorElement = document.getElementById("sensor");
+        const timestampElement = document.getElementById("timestamp");
+
+        const status = data.status || "Ukjent status";
+
+        statusElement.textContent = status;
+        waterLevelElement.textContent = data.water_level ?? "-";
+        sourceElement.textContent = data.source || "-";
+        sensorElement.textContent = data.sensor || "-";
+
+        if (data.timestamp) {
+          const date = new Date(data.timestamp * 1000);
+          timestampElement.textContent = date.toLocaleString("no-NO");
+        } else {
+          timestampElement.textContent = "-";
+        }
+
+        statusElement.className = "status";
+
+        if (status.includes("Tørr")) {
+          statusElement.classList.add("dry");
+        } else if (status.includes("Lavt")) {
+          statusElement.classList.add("medium");
+        } else if (status.includes("Høyt")) {
+          statusElement.classList.add("high");
+        } else if (status.includes("Svært")) {
+          statusElement.classList.add("very-high");
+        }
+
+      } catch (error) {
+        document.getElementById("status").textContent = "Feil ved lasting av data";
+        document.getElementById("status").className = "status error";
+        console.error(error);
+      }
+    }
+
+    loadSensorData();
+    setInterval(loadSensorData, 30000);
+  </script>
+</body>
+</html>
