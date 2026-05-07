@@ -1,1 +1,1 @@
-{"status": "Tørr / veldig lavt nivå", "sensor": "water-level-uart", "github_file": "data/latest.json", "water_level": 22, "source": "pico-w", "timestamp": 1778175528}
+{"status": "Tørr / veldig lavt nivå", "sensor": "water-level-uart", "github_file": "data/latest.json", "water_level": 19, "source": "pico-w", "timestamp": 1778175699}
